@@ -31,13 +31,18 @@ choice <-
          `_v176`, 
          `_v181`, 
          `_v145`,
-         `_v181`) |> 
+         `_v181`, 
+         xj85, 
+         x_age) |> 
   mutate(wage = `_v23`, 
          education = `_v145`, 
          experience = `_v176`,
-         has_wage = is.na(wage)*(wage==0)*1,
+         has_wage = is.na(wage)*(wage == 0)*1,
          gender = xh5,
-         unempl_wage = `_v181`)
+         unempl_wage = `_v181`,
+         unempl_reg = xj85, 
+         age = x_age, 
+         another_region = xi1)
 
 write_csv(choice, "data/dataset.csv")
 choice$education
