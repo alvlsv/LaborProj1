@@ -58,7 +58,8 @@ choice <-
     wealth_ladder=xj62,
     total_hh_income=TINCM_N,
   ) |>  
-  mutate_at(vars(wage_0), ~replace(., is.na(.)| .>1e+07, 0)) |> rename(wage=wage_0) |> filter(now_in_school!=1| is.na(now_in_school))|> select(-now_in_school)|> mutate(has_wage = wage!=0)
+  mutate_at(vars(wage_0), ~replace(., is.na(.)| .>1e+07, 0)) |> rename(wage=wage_0) |> filter(now_in_school!=1| is.na(now_in_school))|> select(-now_in_school)|> mutate(has_wage = wage!=0)|> 
+  mutate_if(~ >1e+07, NA)
 
 
 write_csv(choice, "data/dataset.csv")
