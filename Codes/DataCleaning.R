@@ -34,7 +34,7 @@ choice <-
   mutate(wage = `_v23`, 
          education = `_v145`, 
          experience = `_v176`,
-         has_wage = is.na(wage)*1)
+         has_wage = is.na(wage)*(wage==0)*1)
 
 write_csv(choice, "data/dataset.csv")
 choice$education
