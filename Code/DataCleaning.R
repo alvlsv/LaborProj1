@@ -9,7 +9,7 @@ data_full <- read_dta("data/Round28WF.dta")
 
 #region	регион (на уровне крупных городов/областей/районов) - вроде получше первого
 #status	тип населенного пункта (город/село)
-#x_educ	образование (уровень) -- старше 14
+#x_educ	образование (уровень) 
 #x_age	возраст
 #xh5	пол
 #xh6	год рождения
@@ -30,8 +30,8 @@ choice <-
     xj56,
     xm3,
     x_marst,
+    x_diplom,
     `_v54`,
-    xj73,
     xj63,
     xj62, 
     NCAT1,
@@ -53,13 +53,13 @@ choice <-
     health = xm3,
     marital_status = x_marst,
     now_in_school=`_v54`,
-    pension = xj73,
     power_ladder= xj63,
     wealth_ladder=xj62,
     total_hh_income=TINCM_N,
+    diploma = x_diplom
   ) |>  
   mutate_at(vars(wage_0), ~replace(., is.na(.)| .>1e+07, 0)) |> rename(wage=wage_0) |> filter(now_in_school!=1| is.na(now_in_school))|> select(-now_in_school)|> mutate(has_wage = wage!=0)|> 
-  mutate_if(~ >1e+07, NA)
+  mutate_at( vars(everything()), ~replace(., .>1e+07,NA))
 
 
 write_csv(choice, "data/dataset.csv")
