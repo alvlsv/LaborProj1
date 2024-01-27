@@ -33,7 +33,14 @@ choice <-
     `_v54`,
     xj73,
     xj63,
-    xj62
+    xj62, 
+    NCAT1,
+    NCAT2,
+    NCAT3,
+    NCAT4,
+    NCAT5,
+    NCAT6,
+    TINCM_N
   ) |>
   rename(
     wage_0 = `_v23`,
@@ -48,9 +55,11 @@ choice <-
     now_in_school=`_v54`,
     pension = xj73,
     power_ladder= xj63,
-    wealth_ladder=xj62
+    wealth_ladder=xj62,
+    total_hh_income=TINCM_N,
   ) |>  
-  mutate_at(vars(wage_0), ~replace(., is.na(.)| .>1e+07, 0)) |> rename(wage=wage_0) |> filter(now_in_school!=1| is.na(now_in_school))|> select(-now_in_school)
+  mutate_at(vars(wage_0), ~replace(., is.na(.)| .>1e+07, 0)) |> rename(wage=wage_0) |> filter(now_in_school!=1| is.na(now_in_school))|> select(-now_in_school)|> mutate(has_wage = wage!=0)
 
 
 write_csv(choice, "data/dataset.csv")
+
