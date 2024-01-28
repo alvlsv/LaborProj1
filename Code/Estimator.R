@@ -1,12 +1,15 @@
 
 
 
+
+
 # Libraries ----
 library(tidyverse)
 library(locpol)
 library(sampleSelection)
 library(stargazer)
 library(marginaleffects)
+library(margins)
 #Data ----
 data_raw <- read_csv("data/dataset.csv")
 
@@ -27,7 +30,7 @@ data <- data_raw |> mutate(
 dumb_mincer <-
   lm(
     log(wage) ~ experience * education + I(experience ^ 2) * I(education ^ 2) ,
-    data |> filter(wage > 0)
+    data_raw |> filter(wage > 0)
   )
 dumb_mincer |> summary()
 dumb_mincer |> avg_slopes()
@@ -44,11 +47,13 @@ simple_mincer |> summary()
 
 ## Participation model ----
 
-data_mod <- data |> mutate(wage_1 = ifelse(wage == 0, NA, wage))
+data_mod <-
+  data |> mutate(wage_1 = ifelse(wage == 0, NA, wage),
+                 log_wage = log(wage_1))
 
 heckmod <-
   heckit(
-    has_wage ~  male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income  + wealth_ladder + power_ladder + health+experience+education,
+    has_wage ~  male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income  + wealth_ladder + power_ladder + health + education,
     log(wage_1) ~ -1 + experience * education_f ,
     data = data_mod
   )
@@ -56,36 +61,141 @@ heckmod |> summary()
 
 
 
-stargazer(simple_mincer, heckmod)
+plot_slopes(simple_mincer, heckmod)
 
 ## Local Model ----
-model <- locpol(y ~ x,
-                d,
-                deg = 1,
-                xeval = c(1:9) / 10,
-                kernel = gaussK)
-model$lpFit
-plot
+
+data_df <-
+  data_mod |>
+  select(log_wage, experience) |>
+  as.data.frame() |> na.omit()
 
 
+data_df_2 <-
+  data_mod |>
+  filter(education_f == 2) |>
+  select(log_wage, experience) |>
+  as.data.frame() |> na.omit()
 
-library("mvtnorm")
+bwth <-
+  thumbBw(data_df_2$experience, data_df_2$log_wage, 1, gaussK)
 
-nObs <- 1000
-sigma <- matrix(c(1,-0.7,-0.7, 1), ncol = 2)
-errorTerms <- rmvnorm(nObs, c(0, 0), sigma)
-myData <-
-  data.frame(
-    no = c(1:nObs),
-    x1 = rnorm(nObs),
-    x2 = rnorm(nObs),
-    u1 = errorTerms[, 1],
-    u2 =  errorTerms[, 2]
+
+local_model_2 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_2,
+    bw = bwth,
+    kernel = gaussK,
+    deg = 1
   )
-myData$y <- 2 + myData$x1 + myData$u1
-myData$s <- (2 * myData$x1 + myData$x2 + myData$u2 - 0.2) > 0
-myData$y[!myData$s] <- NA
-myOls <- lm(y ~ x1, data = myData)
-summary(myOls)
-myHeckit <- heckit(s ~ x1 + x2, y ~ x1, myData, print.level = 1)
-summary(myHeckit)
+confInterval(local_model_2)
+
+
+data_df_3 <-
+  data_mod  |>
+  filter(education_f == 3) |>
+  select(log_wage, experience) |>
+  as.data.frame() |> na.omit()
+
+bwth_3 <-
+  thumbBw(data_df_3$experience, data_df_3$log_wage, 1, gaussK)
+
+local_model_3 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_3,
+    bw = bwth,
+    kernel = gaussK,
+    deg = 1
+  )
+confInterval(local_model_3)
+
+
+
+data_df_4 <-
+  data_mod |>
+  filter(education_f == 4, male == 2) |>
+  select(log_wage, experience) |>
+  as.data.frame() |> na.omit()
+
+bwth_4 <-
+  thumbBw(data_df_4$experience, data_df_4$log_wage, 1, gaussK)
+
+local_model_4 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_4,
+    bw = bwth,
+    kernel = gaussK,
+    deg = 1
+  )
+confInterval(local_model_4)
+
+
+
+data_df_5 <-
+  data_mod |>
+  filter(education_f == 5) |>
+  select(log_wage, experience) |>
+  as.data.frame() |>
+  na.omit()
+
+local_model_5 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_5,
+    bw = bwth,
+    kernel = gaussK,
+    deg = 1
+  )
+confInterval(local_model_5)
+
+
+
+data_df_6 <-
+  data_mod |>
+  filter(education_f == 6) |>
+  select(log_wage, experience) |>
+  as.data.frame() |>
+  na.omit()
+bwth_6 <-
+  thumbBw(data_df_6$experience, data_df_6$log_wage, 1, gaussK)
+
+local_model_6 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_6,
+    bw = bwth,
+    kernel = gaussK,
+    deg = 1
+  )
+confInterval(local_model_6)
+
+plotdata <-
+  tibble(
+    exp_2 = local_model_2$lpFit$experience,
+    wage_2 = local_model_2$lpFit$log_wage,
+    exp_3 = local_model_3$lpFit$experience,
+    wage_3 = local_model_3$lpFit$log_wage,
+    exp_4 = local_model_4$lpFit$experience,
+    wage_4 = local_model_4$lpFit$log_wage,
+    exp_5 = local_model_5$lpFit$experience,
+    wage_5 = local_model_5$lpFit$log_wage,
+    exp_6 = local_model_6$lpFit$experience,
+    wage_6 = local_model_6$lpFit$log_wage
+  ) |> filter_at(vars(starts_with("exp")),  ~ .x < 50)
+
+
+
+nprm_plot_full<-
+  ggplot(plotdata, aes(x = exp_6, y = wage_6, color = "6")) +
+  geom_line() +
+  geom_line(aes(x = exp_2, y = wage_2, color = "2")) +
+  geom_line(aes(x = exp_3, y = wage_3, color = "3")) +
+  geom_line(aes(x = exp_4, y = wage_4, color = "4")) +
+  geom_line(aes(x = exp_5, y = wage_5, color = "5")) +
+  geom_line(aes(x = exp_6, y = wage_6, color = "6")) +
+  theme_bw() + labs(color = "Education group",  x ="Experience (yrs)", y = "log(Wage)")
+
+ggsave("fullplot.pdf", path="../Figures", width = 170, height = 105, units="mm")
