@@ -66,7 +66,7 @@ heckmod <-
 heckmod |> summary()
 
 
-stargazer(dumb_mincer,dumb_heckmod)
+stargazer(dumb_mincer, dumb_heckmod)
 
 stargazer(simple_mincer, heckmod)
 
@@ -271,73 +271,76 @@ pred_6 <-
 library(rootSolve)
 
 diff_2_4 <-
-  function(r){
-  s1=0
-  for(t in 1:length(pred_2$lpFit$log_wage)) {
-    s1 <- s1 + (1+r)^(-t-7.5)*exp(pred_2$lpFit$log_wage)[t]
-  }
-  s2=0
-  for(t in 1:length(pred_2$lpFit$log_wage)) {
-    s2 <- s2 + (1+r)^(-t-9)*exp(pred_4$lpFit$log_wage)[t]
-  }
-  diff <- s1-s2
-  return(diff)
-  }
-r_2_4 <- uniroot.all(diff_2_4, c(-1,1))
-
-diff_4_5<-
-  function(r){
-    s1=0
-    for(t in 1:length(pred_2$lpFit$log_wage)) {
-      s1 <- s1 + (1+r)^(-t-9)*exp(pred_4$lpFit$log_wage)[t]
+  function(r) {
+    s1 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 7.5) * exp(pred_2$lpFit$log_wage)[t]
     }
-    s2=0
-    for(t in 1:length(pred_2$lpFit$log_wage)) {
-      s2 <- s2 + (1+r)^(-t-13)*exp(pred_5$lpFit$log_wage)[t]
+    s2 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 9) * exp(pred_4$lpFit$log_wage)[t]
     }
-    diff <- s1-s2
+    diff <- s1 - s2
     return(diff)
   }
-r_4_5 <- uniroot.all(diff_4_5, c(-1,1))
+r_2_4 <- uniroot.all(diff_2_4, c(-1, 1))
 
-
-      
-
-
-diff_5_6<-
-  function(r){
-    s1=0
-    for(t in 1:length(pred_2$lpFit$log_wage)) {
-      s1 <- s1 + (1+r)^(-t-13)*exp(pred_4$lpFit$log_wage)[t]
+diff_4_5 <-
+  function(r) {
+    s1 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 9) * exp(pred_4$lpFit$log_wage)[t]
     }
-    s2=0
-    for(t in 1:length(pred_2$lpFit$log_wage)) {
-      s2 <- s2 + (1+r)^(-t-15)*exp(pred_6$lpFit$log_wage)[t]
+    s2 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 13) * exp(pred_5$lpFit$log_wage)[t]
     }
-    diff <- s1-s2
+    diff <- s1 - s2
     return(diff)
   }
-r_5_6 <- uniroot.all(diff_5_6, c(-1,1))
-
-
-c(r_2_4,r_4_5,r_5_6)
+r_4_5 <- uniroot.all(diff_4_5, c(-1, 1))
 
 
 
-diff_4_6<-
-  function(r){
-    s1=0
-    for(t in 1:length(pred_2$lpFit$log_wage)) {
-      s1 <- s1 + (1+r)^(-t-9)*exp(pred_4$lpFit$log_wage)[t]
+
+
+diff_5_6 <-
+  function(r) {
+    s1 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 13) * exp(pred_4$lpFit$log_wage)[t]
     }
-    s2=0
-    for(t in 1:length(pred_2$lpFit$log_wage)) {
-      s2 <- s2 + (1+r)^(-t-15)*exp(pred_6$lpFit$log_wage)[t]
+    s2 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 15) * exp(pred_6$lpFit$log_wage)[t]
     }
-    diff <- s1-s2
+    diff <- s1 - s2
     return(diff)
   }
-uniroot.all(diff_4_6, c(-1,1))
+r_5_6 <- uniroot.all(diff_5_6, c(-1, 1))
+
+
+c(r_2_4, r_4_5, r_4_6)
+
+
+
+diff_4_6 <-
+  function(r) {
+    s1 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 9) * exp(pred_4$lpFit$log_wage)[t]
+    }
+    s2 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 15) * exp(pred_6$lpFit$log_wage)[t]
+    }
+    diff <- s1 - s2
+    return(diff)
+  }
+r_4_6 <- uniroot.all(diff_4_6, c(-1, 1))
+
+
+c(r_2_4, r_4_5, r_4_6)
 
 
 data_df_6 <-
