@@ -1,8 +1,3 @@
-
-
-
-
-
 # Libraries ----
 library(tidyverse)
 library(locpol)
@@ -26,6 +21,7 @@ data <- data_raw |> mutate(
 
 
 
+
 # Simple Mincer ----
 dumb_mincer <-
   lm(
@@ -36,7 +32,8 @@ dumb_mincer |> summary()
 dumb_mincer |> avg_slopes()
 
 simple_mincer <-
-  lm(log(wage) ~ -1 + experience * education_f, data |> filter(wage > 0))
+  lm(log(wage) ~ experience * education_f,
+     data |> filter(wage > 0, education_f != 1))
 simple_mincer |> summary()
 
 
@@ -54,14 +51,14 @@ data_mod <-
 heckmod <-
   heckit(
     has_wage ~  male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income  + wealth_ladder + power_ladder + health + education,
-    log(wage_1) ~ -1 + experience * education_f ,
+    log(wage_1) ~  experience * education_f ,
     data = data_mod
   )
 heckmod |> summary()
 
 
 
-plot_slopes(simple_mincer, heckmod)
+stargazer(simple_mincer, heckmod)
 
 ## Local Model ----
 
@@ -70,14 +67,13 @@ data_df <-
   select(log_wage, experience) |>
   as.data.frame() |> na.omit()
 
-
 data_df_2 <-
   data_mod |>
   filter(education_f == 2) |>
   select(log_wage, experience) |>
   as.data.frame() |> na.omit()
 
-bwth <-
+bwth_2 <-
   thumbBw(data_df_2$experience, data_df_2$log_wage, 1, gaussK)
 
 
@@ -85,11 +81,12 @@ local_model_2 <-
   locpol(
     log_wage ~ experience,
     data_df_2,
-    bw = bwth,
+    bw = bwth_2,
     kernel = gaussK,
     deg = 1
   )
 confInterval(local_model_2)
+
 
 
 data_df_3 <-
@@ -105,12 +102,11 @@ local_model_3 <-
   locpol(
     log_wage ~ experience,
     data_df_3,
-    bw = bwth,
+    bw = bwth_3,
     kernel = gaussK,
     deg = 1
   )
 confInterval(local_model_3)
-
 
 
 data_df_4 <-
@@ -126,7 +122,7 @@ local_model_4 <-
   locpol(
     log_wage ~ experience,
     data_df_4,
-    bw = bwth,
+    bw = bwth_4,
     kernel = gaussK,
     deg = 1
   )
@@ -145,11 +141,13 @@ local_model_5 <-
   locpol(
     log_wage ~ experience,
     data_df_5,
-    bw = bwth,
+    bw = bwth_5,
     kernel = gaussK,
     deg = 1
   )
 confInterval(local_model_5)
+
+
 
 
 
@@ -166,11 +164,12 @@ local_model_6 <-
   locpol(
     log_wage ~ experience,
     data_df_6,
-    bw = bwth,
+    bw = bwth_6,
     kernel = gaussK,
     deg = 1
   )
 confInterval(local_model_6)
+
 
 plotdata <-
   tibble(
@@ -188,14 +187,144 @@ plotdata <-
 
 
 
-nprm_plot_full<-
+
+nprm_plot_full <-
   ggplot(plotdata, aes(x = exp_6, y = wage_6, color = "6")) +
   geom_line() +
   geom_line(aes(x = exp_2, y = wage_2, color = "2")) +
   geom_line(aes(x = exp_3, y = wage_3, color = "3")) +
   geom_line(aes(x = exp_4, y = wage_4, color = "4")) +
   geom_line(aes(x = exp_5, y = wage_5, color = "5")) +
-  geom_line(aes(x = exp_6, y = wage_6, color = "6")) +
-  theme_bw() + labs(color = "Education group",  x ="Experience (yrs)", y = "log(Wage)")
+  theme_bw() + labs(color = "Education group",  x = "Experience (yrs)", y = "log(Wage)")
 
-ggsave("fullplot.pdf", path="../Figures", width = 170, height = 105, units="mm")
+
+ggsave(
+  "fullplot.pdf",
+  path = "../Figures",
+  width = 170,
+  height = 105,
+  units = "mm"
+)
+
+plotdata |> mutate(across(starts_with("exp")))
+
+
+##
+
+
+pred_2 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_2,
+    bw = bwth_2,
+    kernel = gaussK,
+    xeval = 1:40,
+    deg = 1
+  )
+pred_3 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_3,
+    bw = bwth_3,
+    kernel = gaussK,
+    xeval = 1:40,
+    deg = 1
+  )
+pred_4 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_4,
+    bw = bwth_4,
+    kernel = gaussK,
+    xeval = 1:40,
+    deg = 1
+  )
+pred_5 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_5,
+    bw = bwth_5,
+    kernel = gaussK,
+    xeval = 1:40,
+    deg = 1
+  )
+pred_6 <-
+  locpol(
+    log_wage ~ experience,
+    data_df_6,
+    bw = bwth_6,
+    kernel = gaussK,
+    xeval = 1:40,
+    deg = 1
+  )
+
+library(rootSolve)
+
+diff_2_4 <-
+  function(r){
+  s1=0
+  for(t in 1:length(pred_2$lpFit$log_wage)) {
+    s1 <- s1 + (1+r)^(-t-7.5)*exp(pred_2$lpFit$log_wage)[t]
+  }
+  s2=0
+  for(t in 1:length(pred_2$lpFit$log_wage)) {
+    s2 <- s2 + (1+r)^(-t-9)*exp(pred_4$lpFit$log_wage)[t]
+  }
+  diff <- s1-s2
+  return(diff)
+  }
+r_2_4 <- uniroot.all(diff_2_4, c(-1,1))
+
+diff_4_5<-
+  function(r){
+    s1=0
+    for(t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1+r)^(-t-9)*exp(pred_4$lpFit$log_wage)[t]
+    }
+    s2=0
+    for(t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1+r)^(-t-13)*exp(pred_5$lpFit$log_wage)[t]
+    }
+    diff <- s1-s2
+    return(diff)
+  }
+r_4_5 <- uniroot.all(diff_4_5, c(-1,1))
+
+
+      
+
+
+diff_5_6<-
+  function(r){
+    s1=0
+    for(t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1+r)^(-t-13)*exp(pred_4$lpFit$log_wage)[t]
+    }
+    s2=0
+    for(t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1+r)^(-t-15)*exp(pred_6$lpFit$log_wage)[t]
+    }
+    diff <- s1-s2
+    return(diff)
+  }
+r_5_6 <- uniroot.all(diff_5_6, c(-1,1))
+
+
+c(r_2_4,r_4_5,r_5_6)
+
+
+
+diff_4_6<-
+  function(r){
+    s1=0
+    for(t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1+r)^(-t-9)*exp(pred_4$lpFit$log_wage)[t]
+    }
+    s2=0
+    for(t in 1:length(pred_2$lpFit$log_wage)) {
+      s2 <- s2 + (1+r)^(-t-15)*exp(pred_6$lpFit$log_wage)[t]
+    }
+    diff <- s1-s2
+    return(diff)
+  }
+uniroot.all(diff_4_6, c(-1,1))
