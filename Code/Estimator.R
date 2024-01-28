@@ -31,22 +31,31 @@ dumb_mincer <-
 dumb_mincer |> summary()
 dumb_mincer |> avg_slopes()
 
-simple_mincer <-
+mincer <-
   lm(log(wage) ~ experience * education_f,
      data |> filter(wage > 0, education_f != 1))
-simple_mincer |> summary()
+mincer |> summary()
 
 
 
 
 
-# Correction for Selection  ---
 
-## Participation model ----
+# Participation model ----
 
 data_mod <-
   data |> mutate(wage_1 = ifelse(wage == 0, NA, wage),
                  log_wage = log(wage_1))
+
+
+dumb_heckmod <-
+  heckit(
+    has_wage ~  male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income  + wealth_ladder + power_ladder + health + education,
+    log(wage_1) ~  experience * education,
+    data = data_mod
+  )
+
+dumb_heckmod |> summary()
 
 heckmod <-
   heckit(
@@ -57,10 +66,11 @@ heckmod <-
 heckmod |> summary()
 
 
+stargazer(dumb_mincer,dumb_heckmod)
 
 stargazer(simple_mincer, heckmod)
 
-## Local Model ----
+# Local Model ----
 
 data_df <-
   data_mod |>
@@ -328,3 +338,13 @@ diff_4_6<-
     return(diff)
   }
 uniroot.all(diff_4_6, c(-1,1))
+
+
+data_df_6 <-
+  data_mod |>
+  filter(education_f == 6) |>
+  select(log_wage, experience) |>
+  as.data.frame() |>
+  na.omit()
+bwth_6 <-
+  thumbBw(data_df_6$experience, data_df_6$log_wage, 1, gaussK)
