@@ -5,6 +5,7 @@ library(sampleSelection)
 library(stargazer)
 library(marginaleffects)
 library(margins)
+library(sandwich)
 #Data ----
 data_raw <- read_csv("data/dataset.csv")
 
@@ -17,22 +18,29 @@ data <- data_raw |> mutate(
   marital_status_f = fct(as.character(marital_status)),
   male = fct(as.character(gender))
 )
-
+sum(data$has_wage==1)
 
 
 
 
 # Simple Mincer ----
-dumb_mincer <-
+dumb_mincer_1 <-
+  lm(
+    log(wage) ~ experience + education+I(experience^2)  ,
+    data_raw |> filter(wage > 0)
+  )
+
+dumb_mincer_2 <-
   lm(
     log(wage) ~ experience * education + I(experience ^ 2) * I(education ^ 2) ,
     data_raw |> filter(wage > 0)
   )
+
 dumb_mincer |> summary()
 dumb_mincer |> avg_slopes()
 
 mincer <-
-  lm(log(wage) ~ experience * education_f,
+  lm(log(wage) ~  -1+experience+I(experience^2) + education_f,
      data |> filter(wage > 0, education_f != 1))
 mincer |> summary()
 
@@ -48,27 +56,37 @@ data_mod <-
                  log_wage = log(wage_1))
 
 
-dumb_heckmod <-
+dumb_heckmod_1 <-
   heckit(
-    has_wage ~  male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income  + wealth_ladder + power_ladder + health + education,
-    log(wage_1) ~  experience * education,
+    has_wage ~  relocated+ marital_status + male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income+ wealth_ladder + power_ladder + health ,
+    log(wage_1) ~  experience + education+I(experience^2),
+    data = data_mod
+  )
+dumb_heckmod_2 <-
+  heckit(
+    has_wage ~  age+relocated+marital_status + male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income+ wealth_ladder + power_ladder + health ,
+    log(wage_1) ~  experience * education+I(experience^2) * I(education^2),
     data = data_mod
   )
 
-dumb_heckmod |> summary()
+avg_slopes(dumb_heckmod_2)
+
+dumb_heckmod_1 |> summary()
 
 heckmod <-
   heckit(
-    has_wage ~  male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income  + wealth_ladder + power_ladder + health + education,
-    log(wage_1) ~  experience * education_f ,
-    data = data_mod
+    has_wage ~  age+relocated+marital_status + male + NCAT1 + NCAT2 + NCAT3 + NCAT4 + NCAT5 + NCAT6 + total_hh_income+ wealth_ladder + power_ladder + health,
+    log(wage_1) ~ -1+ experience+I(experience^2) + education_f ,
+    data = data_mod|> filter( education_f != 1)
   )
 heckmod |> summary()
 
+x<-summary(dumb_heckmod_1, vcov.=vcovHC(dumb_heckmod_1, "HC3"))
+x$estimate
 
-stargazer(dumb_mincer, dumb_heckmod)
+stargazer(dumb_mincer_1, dumb_heckmod_1, dumb_mincer_2, dumb_heckmod_2) 
 
-stargazer(simple_mincer, heckmod)
+stargazer(mincer, heckmod)
 
 # Local Model ----
 
@@ -228,7 +246,7 @@ pred_2 <-
     data_df_2,
     bw = bwth_2,
     kernel = gaussK,
-    xeval = 1:40,
+    xeval = 1:38,
     deg = 1
   )
 pred_3 <-
@@ -264,7 +282,7 @@ pred_6 <-
     data_df_6,
     bw = bwth_6,
     kernel = gaussK,
-    xeval = 1:40,
+    xeval = 1:50,
     deg = 1
   )
 
@@ -277,8 +295,8 @@ diff_2_4 <-
       s1 <- s1 + (1 + r) ^ (-t - 7.5) * exp(pred_2$lpFit$log_wage)[t]
     }
     s2 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
-      s2 <- s2 + (1 + r) ^ (-t - 9) * exp(pred_4$lpFit$log_wage)[t]
+    for (t in 1:length(pred_4$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 11) * exp(pred_4$lpFit$log_wage)[t]
     }
     diff <- s1 - s2
     return(diff)
@@ -288,11 +306,11 @@ r_2_4 <- uniroot.all(diff_2_4, c(-1, 1))
 diff_4_5 <-
   function(r) {
     s1 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
-      s1 <- s1 + (1 + r) ^ (-t - 9) * exp(pred_4$lpFit$log_wage)[t]
+    for (t in 1:length(pred_4$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 11) * exp(pred_4$lpFit$log_wage)[t]
     }
     s2 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
+    for (t in 1:length(pred_5$lpFit$log_wage)) {
       s2 <- s2 + (1 + r) ^ (-t - 13) * exp(pred_5$lpFit$log_wage)[t]
     }
     diff <- s1 - s2
@@ -304,20 +322,7 @@ r_4_5 <- uniroot.all(diff_4_5, c(-1, 1))
 
 
 
-diff_5_6 <-
-  function(r) {
-    s1 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
-      s1 <- s1 + (1 + r) ^ (-t - 13) * exp(pred_4$lpFit$log_wage)[t]
-    }
-    s2 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
-      s2 <- s2 + (1 + r) ^ (-t - 15) * exp(pred_6$lpFit$log_wage)[t]
-    }
-    diff <- s1 - s2
-    return(diff)
-  }
-r_5_6 <- uniroot.all(diff_5_6, c(-1, 1))
+
 
 
 c(r_2_4, r_4_5, r_4_6)
@@ -327,11 +332,11 @@ c(r_2_4, r_4_5, r_4_6)
 diff_4_6 <-
   function(r) {
     s1 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
-      s1 <- s1 + (1 + r) ^ (-t - 9) * exp(pred_4$lpFit$log_wage)[t]
+    for (t in 1:length(pred_4$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 11) * exp(pred_4$lpFit$log_wage)[t]
     }
     s2 = 0
-    for (t in 1:length(pred_2$lpFit$log_wage)) {
+    for (t in 1:length(pred_6$lpFit$log_wage)) {
       s2 <- s2 + (1 + r) ^ (-t - 15) * exp(pred_6$lpFit$log_wage)[t]
     }
     diff <- s1 - s2
@@ -343,11 +348,34 @@ r_4_6 <- uniroot.all(diff_4_6, c(-1, 1))
 c(r_2_4, r_4_5, r_4_6)
 
 
-data_df_6 <-
-  data_mod |>
-  filter(education_f == 6) |>
-  select(log_wage, experience) |>
-  as.data.frame() |>
-  na.omit()
-bwth_6 <-
-  thumbBw(data_df_6$experience, data_df_6$log_wage, 1, gaussK)
+diff_2_3 <-
+  function(r) {
+    s1 = 0
+    for (t in 1:length(pred_2$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 7.5) * exp(pred_2$lpFit$log_wage)[t]
+    }
+    s2 = 0
+    for (t in 1:length(pred_3$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 7.5-2) * exp(pred_3$lpFit$log_wage)[t]
+    }
+    diff <- s1 - s2
+    return(diff)
+  }
+r_2_3 <- uniroot.all(diff_2_3, c(-1, 1))
+
+
+diff_5_6 <-
+  function(r) {
+    s1 = 0
+    for (t in 1:length(pred_5$lpFit$log_wage)) {
+      s1 <- s1 + (1 + r) ^ (-t - 13) * exp(pred_5$lpFit$log_wage)[t]
+    }
+    s2 = 0
+    for (t in 1:length(pred_6$lpFit$log_wage)) {
+      s2 <- s2 + (1 + r) ^ (-t - 15) * exp(pred_6$lpFit$log_wage)[t]
+    }
+    diff <- s1 - s2
+    return(diff)
+  }
+r_5_6 <- uniroot.all(diff_5_6, c(-1, 1))
+
