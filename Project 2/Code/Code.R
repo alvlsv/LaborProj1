@@ -11,7 +11,8 @@ dataset_raw <-
 
 write.csv(dataset_raw, file = "data_raw.csv")
 
-
+plot_width= 220/1.2
+plot_height = 140/1.2
 
 dataset_male_raw <-
   dataset_raw |>
@@ -107,8 +108,8 @@ ggsave(
   "all_risk_plot.pdf",
   path = "../Figures",
   all_risk,
-  width = 220/2,
-  height = 140/2,
+  width = plot_width,
+  height = plot_height,
   units = "mm"
 )
 
@@ -129,15 +130,20 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ 1, data = dataset_male)) %>%
     y = "Instantaneous Hazard",
     color = "",
     fill = ""
-  ) + scale_color_discrete(labels = names_status) + scale_fill_discrete(labels = names_status) + theme_ggsurvfit_default() + scale_ggsurvfit()+  xlim(NA, 200)
+  ) + 
+  scale_color_discrete(labels = names_status) + 
+  scale_fill_discrete(labels = names_status) + 
+  theme_ggsurvfit_default() + 
+  scale_ggsurvfit()+  
+  xlim(NA, 200)
 
 
 ggsave(
   "all_hazard_plot.pdf",
   path = "../Figures",
   all_haz,
-  width = 220/2,
-  height = 140/2,
+  width = plot_width,
+  height = plot_height,
   units = "mm"
 )
 
@@ -164,8 +170,8 @@ ggsave(
   "status_risk_plot.pdf",
   path = "../Figures",
   status_risk,
-  width = 220/2,
-  height = 140/2,
+  width = plot_width,
+  height = plot_height,
   units = "mm"
 )
 
@@ -195,15 +201,15 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ status, data = dataset_male))
   scale_color_discrete(labels = names_status) + 
   scale_fill_discrete(labels = names_status) + 
   theme_ggsurvfit_default() + 
-  scale_ggsurvfit()+ 
+  scale_ggsurvfit() + 
   xlim(NA, 200)
 
 ggsave(
   "status_haz_plot.pdf",
   path = "../Figures",
   status_haz,
-  width = 220/2,
-  height = 140/2,
+  width = plot_width,
+  height = plot_height,
   units = "mm"
 )
 
@@ -226,20 +232,22 @@ survfit2(Surv(spell, censored) ~ education,
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
   scale_color_discrete(labels = names_education) +
-  scale_fill_discrete(labels = names_education) +  scale_ggsurvfit()
+  scale_fill_discrete(labels = names_education) +  
+  scale_ggsurvfit() +
+  xlim(NA, 200)
 
 
 ggsave(
   "educ_risk_plot.pdf",
   path = "../Figures",
   educ_risk,
-  width = 220/2,
-  height = 140/2,
+  width = plot_width,
+  height = plot_height,
   units = "mm"
 )
 
 
-
+educ_haz <-
 epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ education, data = dataset_male)) %>%
   ggplot(aes(
     x = time,
@@ -260,17 +268,88 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ education, data = dataset_mal
     y = "Instantaneous Hazard",
     color = "",
     fill = ""
-  ) + scale_color_discrete(labels = names_education) + scale_fill_discrete(labels = names_education) + theme_ggsurvfit_default() + scale_ggsurvfit()
+  ) + 
+  scale_color_discrete(labels = names_education) + 
+  scale_fill_discrete(labels = names_education) + 
+  theme_ggsurvfit_default() + 
+  scale_ggsurvfit() + 
+  xlim(NA, 200)
+
+
+ggsave(
+  "educ_haz_plot.pdf",
+  path = "../Figures",
+  educ_haz,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
 
 
 
+
+chern_risk <-
 survfit2(Surv(spell, censored) ~ chernobyl,
          data = dataset_male) |>
-  ggsurvfit() +
+  ggsurvfit("risk") +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
   scale_color_discrete(labels = c("Chernobyl victim status", "Others")) +
-  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) +  scale_ggsurvfit()
+  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) +  scale_ggsurvfit()+ 
+  xlim(NA, 200)
+
+
+ggsave(
+  "chern_risk_plot.pdf",
+  path = "../Figures",
+  chern_risk,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+
+chern_haz <-
+  epiR::epi.insthaz(
+    survfit2(Surv(spell, censored) ~ chernobyl, 
+             data = dataset_male)
+    )|>
+  ggplot(aes(
+    x = time,
+    y = hest,
+    color = strata,
+    fill = strata
+  )) +
+  geom_smooth(
+    method = "loess",
+    formula = "y ~ x",
+    alpha = 0.2,
+    linewidth = 0.6,
+    se = F
+  ) +
+  labs(
+    title = "",
+    x = "Unemployment duration (weeks)",
+    y = "Instantaneous Hazard",
+    color = "",
+    fill = ""
+  ) + 
+  scale_color_discrete(labels = c("Chernobyl victim status", "Others")) + 
+  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) + 
+  theme_ggsurvfit_default() + 
+  scale_ggsurvfit() + 
+  xlim(NA, 200)
+
+
+ggsave(
+  "chern_haz_plot.pdf",
+  path = "../Figures",
+  chern_haz,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
 
 
 
