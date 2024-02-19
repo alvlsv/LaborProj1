@@ -9,10 +9,10 @@ library(ggsurvfit)
 dataset_raw <-
   read_dta("Project 2 data after stset.dta", encoding = "latin1")
 
-write.csv(dataset_raw, file = "data_raw.csv")
+#write.csv(dataset_raw, file = "data_raw.csv")
 
-plot_width= 220/1.2
-plot_height = 140/1.2
+plot_width = 220 / 1.2
+plot_height = 140 / 1.2
 
 dataset_male_raw <-
   dataset_raw |>
@@ -37,7 +37,6 @@ dataset_male_raw <-
     age,
     p_arch_N,
     n_zarpl,
-    zarplat,
     t_prof,
     n_emp,
     strong,
@@ -82,7 +81,7 @@ dataset_male <-
       filter(!is.na(spell)),
     by = join_by(id == id)
   ) |>
-  select(-spell.x, -censored.x, -got_employed.x) |>
+  select(-spell.x,-censored.x,-got_employed.x) |>
   rename(spell = spell.y,
          censored = censored.y) |> filter(education != 7)
 
@@ -96,11 +95,9 @@ Surv(dataset_male$spell, dataset_male$censored)
 
 all_risk <-
   survfit2(Surv(spell, censored) ~ 1, data = dataset_male) |>
-  ggsurvfit("risk") +
+  ggsurvfit() +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
-  scale_color_discrete(labels = names_status) +
-  scale_fill_discrete(labels = names_status) +
   scale_ggsurvfit() +
   xlim(NA, 200)
 
@@ -115,7 +112,7 @@ ggsave(
 
 
 all_haz <-
-epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ 1, data = dataset_male)) %>%
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ 1, data = dataset_male)) %>%
   ggplot(aes(x = time, y = hest)) +
   geom_smooth(
     method = "loess",
@@ -130,11 +127,9 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ 1, data = dataset_male)) %>%
     y = "Instantaneous Hazard",
     color = "",
     fill = ""
-  ) + 
-  scale_color_discrete(labels = names_status) + 
-  scale_fill_discrete(labels = names_status) + 
-  theme_ggsurvfit_default() + 
-  scale_ggsurvfit()+  
+  ) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
   xlim(NA, 200)
 
 
@@ -158,11 +153,11 @@ names_status <-
 
 status_risk <-
   survfit2(Surv(spell, censored) ~ status, data = dataset_male) |>
-  ggsurvfit("risk") +
+  ggsurvfit() +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
   scale_color_discrete(labels = names_status) +
-  scale_fill_discrete(labels = names_status) +  
+  scale_fill_discrete(labels = names_status) +
   scale_ggsurvfit() +
   xlim(NA, 200)
 
@@ -177,7 +172,7 @@ ggsave(
 
 
 status_haz <-
-epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ status, data = dataset_male)) %>%
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ status, data = dataset_male)) %>%
   ggplot(aes(
     x = time,
     y = hest,
@@ -197,11 +192,11 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ status, data = dataset_male))
     y = "Instantaneous Hazard",
     color = "",
     fill = ""
-  ) + 
-  scale_color_discrete(labels = names_status) + 
-  scale_fill_discrete(labels = names_status) + 
-  theme_ggsurvfit_default() + 
-  scale_ggsurvfit() + 
+  ) +
+  scale_color_discrete(labels = names_status) +
+  scale_fill_discrete(labels = names_status) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
   xlim(NA, 200)
 
 ggsave(
@@ -226,13 +221,13 @@ names_education <-
   )
 
 educ_risk <-
-survfit2(Surv(spell, censored) ~ education,
-         data = dataset_male |> filter(education != 7)) |>
-  ggsurvfit("risk") +
+  survfit2(Surv(spell, censored) ~ education,
+           data = dataset_male |> filter(education != 7)) |>
+  ggsurvfit() +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
   scale_color_discrete(labels = names_education) +
-  scale_fill_discrete(labels = names_education) +  
+  scale_fill_discrete(labels = names_education) +
   scale_ggsurvfit() +
   xlim(NA, 200)
 
@@ -248,7 +243,7 @@ ggsave(
 
 
 educ_haz <-
-epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ education, data = dataset_male)) %>%
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ education, data = dataset_male)) %>%
   ggplot(aes(
     x = time,
     y = hest,
@@ -268,11 +263,11 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ education, data = dataset_mal
     y = "Instantaneous Hazard",
     color = "",
     fill = ""
-  ) + 
-  scale_color_discrete(labels = names_education) + 
-  scale_fill_discrete(labels = names_education) + 
-  theme_ggsurvfit_default() + 
-  scale_ggsurvfit() + 
+  ) +
+  scale_color_discrete(labels = names_education) +
+  scale_fill_discrete(labels = names_education) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
   xlim(NA, 200)
 
 
@@ -289,13 +284,13 @@ ggsave(
 
 
 chern_risk <-
-survfit2(Surv(spell, censored) ~ chernobyl,
-         data = dataset_male) |>
-  ggsurvfit("risk") +
+  survfit2(Surv(spell, censored) ~ chernobyl,
+           data = dataset_male) |>
+  ggsurvfit() +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
   scale_color_discrete(labels = c("Chernobyl victim status", "Others")) +
-  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) +  scale_ggsurvfit()+ 
+  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) +  scale_ggsurvfit() +
   xlim(NA, 200)
 
 
@@ -311,10 +306,8 @@ ggsave(
 
 
 chern_haz <-
-  epiR::epi.insthaz(
-    survfit2(Surv(spell, censored) ~ chernobyl, 
-             data = dataset_male)
-    )|>
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ chernobyl,
+                             data = dataset_male)) |>
   ggplot(aes(
     x = time,
     y = hest,
@@ -334,11 +327,11 @@ chern_haz <-
     y = "Instantaneous Hazard",
     color = "",
     fill = ""
-  ) + 
-  scale_color_discrete(labels = c("Chernobyl victim status", "Others")) + 
-  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) + 
-  theme_ggsurvfit_default() + 
-  scale_ggsurvfit() + 
+  ) +
+  scale_color_discrete(labels = c("Chernobyl victim status", "Others")) +
+  scale_fill_discrete(labels = c("Chernobyl victim status", "Others")) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
   xlim(NA, 200)
 
 
@@ -353,19 +346,70 @@ ggsave(
 
 
 
-
-survfit2(Surv(spell, censored) ~ change_in_prof ,
-         data = dataset_male) |>
+change_risk <-
+  survfit2(Surv(spell, censored) ~ change_in_prof ,
+           data = dataset_male) |>
   ggsurvfit() +
   labs(x = "Unemployment duration (weeks)") +
   scale_ggsurvfit()  +
   add_confidence_interval() +
   scale_color_discrete(labels = c("Profession unchanged", "Profession changed")) +
-  scale_fill_discrete(labels = c("Profession unchanged", "Profession changed"))
+  scale_fill_discrete(labels = c("Profession unchanged", "Profession changed")) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
 
 
 
 
+ggsave(
+  "change_risk_plot.pdf",
+  path = "../Figures",
+  change_risk,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+change_haz <-
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ change_in_prof,
+                             data = dataset_male)) |>
+  ggplot(aes(
+    x = time,
+    y = hest,
+    color = strata,
+    fill = strata
+  )) +
+  geom_smooth(
+    method = "loess",
+    formula = "y ~ x",
+    alpha = 0.2,
+    linewidth = 0.6,
+    se = F
+  ) +
+  labs(
+    title = "",
+    x = "Unemployment duration (weeks)",
+    y = "Instantaneous Hazard",
+    color = "",
+    fill = ""
+  ) +
+  scale_color_discrete(labels = c("Profession unchanged", "Profession changed")) +
+  scale_fill_discrete(labels = c("Profession unchanged", "Profession changed")) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+
+ggsave(
+  "change_haz_plot.pdf",
+  path = "../Figures",
+  change_haz,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
 
 
 
@@ -373,10 +417,9 @@ survfit2(Surv(spell, censored) ~ change_in_prof ,
 cox_mod <-
   coxph(
     Surv(spell, censored) ~ marital_status + age_cat + education + n_dependents +
-      chernobyl + desired_wage + sector_of_last_emp + change_in_prof + general_tenure + number_of_jobs +
+      chernobyl + desired_wage   + general_tenure + number_of_jobs +
       high_income + high_wage + high_concentration,
     data = dataset_male ,
-    robust = T,
     model = T
   )
 
@@ -387,10 +430,10 @@ cox_mod |> summary()
 cox_mod_1 <-
   coxph(
     Surv(spell, censored) ~  marital_status + age_cat + education + n_dependents +
-      chernobyl + desired_wage + sector_of_last_emp + change_in_prof + general_tenure + number_of_jobs +
-      high_income + high_wage + high_concentration,
+      chernobyl + desired_wage + sector_of_last_emp  + general_tenure + number_of_jobs +
+      high_income + high_wage + high_concentration+strata(factor(desired_wage), sector_of_last_emp, n_dependents, education, age_cat),
     data = dataset_male |> filter(status == 1) ,
-    robust = T
+    robust = T, 
   )
 cox_mod_1 |> summary()
 
@@ -398,9 +441,8 @@ cox_mod_1 |> summary()
 cox_mod_2 <-
   coxph(
     Surv(spell, censored) ~  marital_status + age_cat + education + n_dependents +
-      chernobyl + desired_wage + sector_of_last_emp + change_in_prof + general_tenure + number_of_jobs +
-      high_income + high_wage + high_concentration,
-    data = dataset_male |> filter(status == 2) ,
+      chernobyl + desired_wage + sector_of_last_emp  + general_tenure + number_of_jobs + high_income + high_wage + high_concentration,
+    data = dataset_male |> filter(sector_of_last_emp == 2) ,
     robust = T
   )
 cox_mod_2 |> summary()
@@ -426,10 +468,25 @@ cox_mod_2 |> cox.zph()
 cox_mod_3 |> cox.zph()
 
 
-survminer::ggcoxzph(cox_mod |> cox.zph())
+res_plot <- survminer::ggcoxzph(cox_mod_2 |> cox.zph())
+res_plot[4]
 
 
-stargazer(cox_mod, cox_mod_1, cox_mod_2, cox_mod_3, type="text", df=F)
+ggsave(
+  "all_risk_plot.pdf",
+  path = "../Figures",
+  res_plot,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+stargazer(cox_mod,
+          cox_mod_1,
+          cox_mod_2,
+          cox_mod_3,
+          type = "latex",
+          df = F)
 
 survreg(
   Surv(spell, censored) ~ marital_status + age_cat + education + n_dependents +
@@ -439,12 +496,19 @@ survreg(
 ) |> plot()
 
 
+
+
 survfit(cox_mod) |> autoplot() + theme_ggsurvfit_default()
 
 
 
 
 
+GGally::ggpairs(
+  dataset_male |> select(names(cox_mod$model)[c(3,7,12)]),
+  ggplot2::aes(),
+  cardinality_threshold = 20
+)
 
-GGally::ggpairs(dataset_male|> select(-sector_of_last_emp),
-                ggplot2::aes(), cardinality_threshold = 20)
+
+dataset_male$desired_wage
