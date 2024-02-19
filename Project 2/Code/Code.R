@@ -414,6 +414,77 @@ ggsave(
 
 
 
+
+
+
+names_marital_status <-
+  c("Married",
+    "Not Married",
+    "Divorced/Widowed")
+
+
+marital_risk <-
+  survfit2(Surv(spell, censored) ~ marital_status, data = dataset_male) |>
+  ggsurvfit() +
+  labs(x = "Unemployment duration (weeks)") +
+  add_confidence_interval() +
+  scale_color_discrete(labels = names_marital_status) +
+  scale_fill_discrete(labels = names_marital_status) +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+ggsave(
+  "marital_risk_plot.pdf",
+  path = "../Figures",
+  marital_risk,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+marital_haz <-
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ marital_status, data = dataset_male)) %>%
+  ggplot(aes(
+    x = time,
+    y = hest,
+    color = strata,
+    fill = strata
+  )) +
+  geom_smooth(
+    method = "loess",
+    formula = "y ~ x",
+    alpha = 0.2,
+    linewidth = 0.6,
+    se = F
+  ) +
+  labs(
+    title = "",
+    x = "Unemployment duration (weeks)",
+    y = "Instantaneous Hazard",
+    color = "",
+    fill = ""
+  ) +
+  scale_color_discrete(labels = names_marital_status) +
+  scale_fill_discrete(labels = names_marital_status) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+ggsave(
+  "marital_haz_plot.pdf",
+  path = "../Figures",
+  marital_haz,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+
+
+# Cox -----
+
 cox_mod <-
   coxph(
     Surv(spell, censored) ~ marital_status + age_cat + education + n_dependents +
@@ -430,8 +501,8 @@ cox_mod |> summary()
 cox_mod_1 <-
   coxph(
     Surv(spell, censored) ~  marital_status + age_cat + education + n_dependents +
-      chernobyl + desired_wage + sector_of_last_emp  + general_tenure + number_of_jobs +
-      high_income + high_wage + high_concentration+strata(factor(desired_wage), sector_of_last_emp, n_dependents, education, age_cat),
+      chernobyl + general_tenure + number_of_jobs +
+      high_income + high_wage + high_concentration+strata(sector_of_last_emp, education, age_cat, high_income, high_wage, high_concentration),
     data = dataset_male |> filter(status == 1) ,
     robust = T, 
   )
@@ -502,13 +573,13 @@ survfit(cox_mod) |> autoplot() + theme_ggsurvfit_default()
 
 
 
+names(cox_mod$model)
+
+# Summary Stat ----
+library(Hmisc)
+dataset_male |> select(spell)|> hist()
+dataset_male |> select(education) |> hist()
+dataset_male |> select(marital_status) |> hist()
 
 
-GGally::ggpairs(
-  dataset_male |> select(names(cox_mod$model)[c(3,7,12)]),
-  ggplot2::aes(),
-  cardinality_threshold = 20
-)
-
-
-dataset_male$desired_wage
+dataset_male|> as.data.frame()|> stargazer(summary=T)
