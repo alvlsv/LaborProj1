@@ -170,7 +170,7 @@ ggsave(
 )
 
 
-
+status_haz <-
 epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ status, data = dataset_male)) %>%
   ggplot(aes(
     x = time,
@@ -198,6 +198,15 @@ epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ status, data = dataset_male))
   scale_ggsurvfit()+ 
   xlim(NA, 200)
 
+ggsave(
+  "status_haz_plot.pdf",
+  path = "../Figures",
+  status_haz,
+  width = 220/2,
+  height = 140/2,
+  units = "mm"
+)
+
 
 
 names_education <-
@@ -209,13 +218,26 @@ names_education <-
     "University",
     "Post-Grad"
   )
+
+educ_risk <-
 survfit2(Surv(spell, censored) ~ education,
          data = dataset_male |> filter(education != 7)) |>
-  ggsurvfit() +
+  ggsurvfit("risk") +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
   scale_color_discrete(labels = names_education) +
   scale_fill_discrete(labels = names_education) +  scale_ggsurvfit()
+
+
+ggsave(
+  "educ_risk_plot.pdf",
+  path = "../Figures",
+  educ_risk,
+  width = 220/2,
+  height = 140/2,
+  units = "mm"
+)
+
 
 
 epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ education, data = dataset_male)) %>%
