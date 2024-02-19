@@ -4,6 +4,7 @@ library(muhaz)
 library(haven)
 library(stargazer)
 library(ggsurvfit)
+library(survminer)
 
 
 dataset_raw <-
@@ -596,6 +597,7 @@ m2<-cox_mod_2 |> cox.zph()
 m3<-cox_mod_3 |> cox.zph()
 stargazer(m0$table)
 stargazer(m1$table[,1])
+stargazer(m2$table[,1])
 
 
 res_plot <- survminer::ggcoxzph(cox_mod_2 |> cox.zph())
@@ -610,12 +612,6 @@ stargazer(cox_mod,
           type = "latex",
           df = F)
 
-survreg(
-  Surv(spell, censored) ~ marital_status + age_cat + education + n_dependents +
-    chernobyl + log_desired_wage + change_in_prof + number_of_jobs,
-  data = dataset_male,
-  
-) |> plot()
 
 
 
@@ -632,17 +628,46 @@ ggplot(dataset_male, aes(x=spell))+geom_histogram()
 
 
 
-dataset_male |> as.data.frame() |> stargazer(summary=T)
+dataset_male |> as.data.frame() |> stargazer(summary = T)
 
-
+#marital_status + age_cat + education + n_dependents + chernobyl +desired_wage + sector_of_last_emp + change_in_prof + general_tenure + number_of_jobs + high_income + high_wage + high_concentration
 
 cox_mod_strat <-
   coxph(
-    Surv(spell, censored) ~ chernobyl +marital_status + strata(marital_status, status, age_cat, high_income, high_concentration, high_wage, sector_of_last_emp, general_tenure, n_dependents),
+    Surv(spell, censored) ~ chernobyl + marital_status + change_in_prof+ strata(education, status, age_cat, high_income, high_concentration, sector_of_last_emp, general_tenure, n_dependents, high_wage),
     data = dataset_male, robust=T
   )
 
 cox_mod_strat |> summary()
-cox_mod_strat |> cox.zph()
-cox_mod_strat |> stargazer()
-library(survminer)
+zph_strat <- cox_mod_strat |> cox.zph()
+cox_mod_strat |> stargazer(df = F)
+
+test_plot <- ggcoxzph(zph_strat)
+test_plot_1 <-test_plot[1]
+test_plot_2 <-test_plot[2]
+test_plot_3 <-test_plot[3]
+ggsave(
+  "test_plot_1.pdf",
+  path = "../Figures",
+  test_plot_1$`1`,
+  width = plot_height,
+  height =plot_width/3,
+  units = "mm"
+)
+
+ggsave(
+  "test_plot_2.pdf",
+  path = "../Figures",
+  test_plot_2$`2`,
+  width = plot_height,
+  height =plot_width/3,
+  units = "mm"
+)
+ggsave(
+  "test_plot_3.pdf",
+  path = "../Figures",
+  test_plot_3$`3`,
+  width = plot_height,
+  height =plot_width/3,
+  units = "mm"
+)
