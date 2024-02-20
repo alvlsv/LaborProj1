@@ -12,8 +12,8 @@ dataset_raw <-
 
 #write.csv(dataset_raw, file = "data_raw.csv")
 
-plot_width = 220 / 1.2
-plot_height = 140 / 1.2
+plot_width = 220 / 1.4
+plot_height = 140 / 1.4
 
 dataset_male_raw <-
   dataset_raw |>
@@ -482,7 +482,6 @@ ggsave(
 
 
 
-high_income + high_wage + high_concentration
 
 city_income_risk <-
   survfit2(Surv(spell, censored) ~ high_income, data = dataset_male) |>
@@ -536,6 +535,126 @@ ggsave(
   "city_income_haz_plot.pdf",
   path = "../Figures",
   city_income_haz,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+
+
+city_wage_risk <-
+  survfit2(Surv(spell, censored) ~ high_wage, data = dataset_male) |>
+  ggsurvfit() +
+  labs(x = "Unemployment duration (weeks)") +
+  add_confidence_interval() +
+  scale_color_discrete(labels = c("Region with higher than avg wage", "Region with higher than avg wage")) +
+  scale_fill_discrete(labels = c("Region with higher than avg wage", "Region with higher than avg wage")) +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+ggsave(
+  "city_wage_risk_plot.pdf",
+  path = "../Figures",
+  city_wage_risk,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+city_wage_haz <-
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ high_wage, data = dataset_male)) %>%
+  ggplot(aes(
+    x = time,
+    y = hest,
+    color = strata,
+    fill = strata
+  )) +
+  geom_smooth(
+    method = "loess",
+    formula = "y ~ x",
+    alpha = 0.2,
+    linewidth = 0.6,
+    se = F
+  ) +
+  labs(
+    title = "",
+    x = "Unemployment duration (weeks)",
+    y = "Instantaneous Hazard",
+    color = "",
+    fill = ""
+  ) +
+  scale_color_discrete(labels =c("Region with higher than avg wage", "Region with higher than avg wage")) +
+  scale_fill_discrete(labels = c("Region with higher than avg wage", "Region with higher than avg wage")) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+ggsave(
+  "city_wage_haz_plot.pdf",
+  path = "../Figures",
+  city_wage_haz,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+
+
+city_conc_risk <-
+  survfit2(Surv(spell, censored) ~ high_concentration, data = dataset_male) |>
+  ggsurvfit() +
+  labs(x = "Unemployment duration (weeks)") +
+  add_confidence_interval() +
+  scale_color_discrete(labels = c("Region with higher than avg concentration ratio", "Region with higher than avg concentration ratio")) +
+  scale_fill_discrete(labels = c("Region with higher than avg concentration ratio", "Region with higher than avg concentration ratio")) +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+ggsave(
+  "city_conc_risk_plot.pdf",
+  path = "../Figures",
+  city_conc_risk,
+  width = plot_width,
+  height = plot_height,
+  units = "mm"
+)
+
+
+city_conc_haz <-
+  epiR::epi.insthaz(survfit2(Surv(spell, censored) ~ high_concentration, data = dataset_male)) %>%
+  ggplot(aes(
+    x = time,
+    y = hest,
+    color = strata,
+    fill = strata
+  )) +
+  geom_smooth(
+    method = "loess",
+    formula = "y ~ x",
+    alpha = 0.2,
+    linewidth = 0.6,
+    se = F
+  ) +
+  labs(
+    title = "",
+    x = "Unemployment duration (weeks)",
+    y = "Instantaneous Hazard",
+    color = "",
+    fill = ""
+  ) +
+  scale_color_discrete(labels = c("Region with higher than avg concentration ratio", "Region with higher than avg concentration ratio")) +
+  scale_fill_discrete(labels = c("Region with higher than avg concentration ratio", "Region with higher than avg concentration ratio")) +
+  theme_ggsurvfit_default() +
+  scale_ggsurvfit() +
+  xlim(NA, 200)
+
+ggsave(
+  "city_conc_haz_plot.pdf",
+  path = "../Figures",
+  city_conc_haz,
   width = plot_width,
   height = plot_height,
   units = "mm"
@@ -598,10 +717,8 @@ m3<-cox_mod_3 |> cox.zph()
 stargazer(m0$table)
 stargazer(m1$table[,1])
 stargazer(m2$table[,1])
+stargazer(m3$table[,1])
 
-
-res_plot <- survminer::ggcoxzph(cox_mod_2 |> cox.zph())
-res_plot[4]
 
 
 
@@ -671,3 +788,4 @@ ggsave(
   height =plot_width/3,
   units = "mm"
 )
+
