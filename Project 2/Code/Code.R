@@ -488,8 +488,8 @@ city_income_risk <-
   ggsurvfit() +
   labs(x = "Unemployment duration (weeks)") +
   add_confidence_interval() +
-  scale_color_discrete(labels = c("Region with higher than avg pc income", "Region with higher than avg pc income")) +
-  scale_fill_discrete(labels = c("Region with higher than avg pc income", "Region with higher than avg pc income")) +
+  scale_color_discrete(labels = c("Region with higher than avg pc income", "Region with lower than avg pc income")) +
+  scale_fill_discrete(labels = c("Region with higher than avg pc income", "Region with lower than avg pc income")) +
   scale_ggsurvfit() +
   xlim(NA, 200)
 
